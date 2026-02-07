@@ -1,0 +1,1128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AgentRank-RL | Linkup Research Demo</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        :root {
+            --primary: #3b82f6;
+            --secondary: #8b5cf6;
+            --accent: #06b6d4;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --bg-dark: #0a0a0f;
+            --bg-card: #111118;
+            --bg-elevated: #1a1a24;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --border: #2d2d3a;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            min-height: 100vh;
+            background-image: 
+                radial-gradient(ellipse at 20% 0%, rgba(59, 130, 246, 0.15) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 100%, rgba(139, 92, 246, 0.1) 0%, transparent 50%);
+        }
+
+        .header {
+            background: rgba(17, 17, 24, 0.8);
+            border-bottom: 1px solid var(--border);
+            padding: 1rem 2rem;
+            backdrop-filter: blur(10px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            max-width: 1600px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .logo-icon {
+            width: 44px;
+            height: 44px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+        }
+
+        .logo-text {
+            font-size: 1.4rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .logo-sub {
+            font-size: 0.6rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .badges {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .badge {
+            padding: 0.4rem 0.75rem;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .badge.live {
+            background: rgba(59, 130, 246, 0.15);
+            border-color: var(--primary);
+            color: var(--primary);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .main {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 1.5rem 2rem;
+        }
+
+        .hero {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .hero h1 {
+            font-size: 2rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, var(--primary), var(--secondary), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero p {
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 360px;
+            gap: 1.5rem;
+        }
+
+        @media (max-width: 1200px) {
+            .grid { grid-template-columns: 1fr; }
+        }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+        .card-header {
+            padding: 1rem 1.25rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-title {
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .card-body {
+            padding: 1.25rem;
+        }
+
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .metric {
+            background: var(--bg-elevated);
+            border-radius: 12px;
+            padding: 1rem;
+            text-align: center;
+        }
+
+        .metric-value {
+            font-size: 1.6rem;
+            font-weight: 800;
+            font-family: 'JetBrains Mono', monospace;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .metric-label {
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            margin-top: 0.25rem;
+        }
+
+        .metric-change {
+            font-size: 0.7rem;
+            margin-top: 0.25rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .metric-change.up { color: var(--success); }
+        .metric-change.down { color: var(--danger); }
+
+        .environment {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .panel {
+            background: var(--bg-elevated);
+            border-radius: 12px;
+            padding: 1rem;
+        }
+
+        .panel-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .panel-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        .panel-title {
+            font-weight: 700;
+        }
+
+        .panel-sub {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .query-box {
+            background: var(--bg-dark);
+            border-radius: 8px;
+            padding: 0.75rem;
+            margin-bottom: 1rem;
+            border-left: 3px solid var(--primary);
+        }
+
+        .query-label {
+            font-size: 0.6rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            margin-bottom: 0.25rem;
+        }
+
+        .query-text {
+            font-size: 0.85rem;
+        }
+
+        .results-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .result-item {
+            background: var(--bg-dark);
+            border-radius: 8px;
+            padding: 0.6rem 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .result-item:hover {
+            border-color: var(--primary);
+        }
+
+        .result-item.selected {
+            border-color: var(--success);
+            background: rgba(16, 185, 129, 0.1);
+        }
+
+        .result-item.rejected {
+            border-color: var(--danger);
+            background: rgba(239, 68, 68, 0.1);
+            opacity: 0.6;
+        }
+
+        .result-rank {
+            width: 24px;
+            height: 24px;
+            background: var(--bg-elevated);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .result-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .result-title {
+            font-size: 0.75rem;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .result-url {
+            font-size: 0.6rem;
+            color: var(--accent);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .result-score {
+            font-size: 0.7rem;
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--secondary);
+            padding: 0.2rem 0.4rem;
+            background: rgba(139, 92, 246, 0.15);
+            border-radius: 4px;
+        }
+
+        .reward-badge {
+            position: absolute;
+            right: -8px;
+            top: 50%;
+            transform: translateY(-50%);
+            padding: 0.15rem 0.4rem;
+            border-radius: 4px;
+            font-size: 0.65rem;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+            animation: slideIn 0.3s ease;
+        }
+
+        .reward-badge.positive {
+            background: var(--success);
+            color: white;
+        }
+
+        .reward-badge.negative {
+            background: var(--danger);
+            color: white;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(-50%) translateX(10px); }
+            to { opacity: 1; transform: translateY(-50%) translateX(0); }
+        }
+
+        .q-values {
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+        }
+
+        .q-bar {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .q-label {
+            width: 50px;
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .q-track {
+            flex: 1;
+            height: 18px;
+            background: var(--bg-dark);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .q-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            border-radius: 4px;
+            transition: width 0.4s;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 6px;
+        }
+
+        .q-value {
+            font-size: 0.6rem;
+            font-weight: 600;
+            color: white;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .network {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 0;
+        }
+
+        .layer {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            align-items: center;
+        }
+
+        .neuron {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: var(--bg-dark);
+            border: 2px solid var(--border);
+            transition: all 0.2s;
+        }
+
+        .neuron.active {
+            background: var(--primary);
+            border-color: var(--primary);
+            box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+        }
+
+        .layer-label {
+            font-size: 0.55rem;
+            color: var(--text-muted);
+            margin-top: 0.4rem;
+            text-transform: uppercase;
+        }
+
+        .controls {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 0.75rem;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: var(--text-primary);
+            font-family: 'Inter', sans-serif;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.4rem;
+        }
+
+        .btn:hover {
+            border-color: var(--primary);
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        .btn.primary {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border: none;
+            color: white;
+        }
+
+        .btn.primary:hover {
+            opacity: 0.9;
+        }
+
+        .btn.active {
+            border-color: var(--primary);
+            background: rgba(59, 130, 246, 0.2);
+        }
+
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .chart-container {
+            background: var(--bg-elevated);
+            border-radius: 12px;
+            padding: 1rem;
+        }
+
+        .chart-title {
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+        }
+
+        .chart {
+            height: 100px;
+            display: flex;
+            align-items: flex-end;
+            gap: 2px;
+        }
+
+        .chart-bar {
+            flex: 1;
+            background: linear-gradient(to top, var(--primary), var(--secondary));
+            border-radius: 2px 2px 0 0;
+            min-height: 3px;
+            transition: height 0.3s;
+        }
+
+        .chart-bar.negative {
+            background: var(--danger);
+        }
+
+        .log-container {
+            max-height: 250px;
+            overflow-y: auto;
+        }
+
+        .log-item {
+            display: flex;
+            gap: 0.6rem;
+            padding: 0.6rem;
+            background: var(--bg-elevated);
+            border-radius: 8px;
+            margin-bottom: 0.4rem;
+            border-left: 3px solid var(--primary);
+            animation: fadeIn 0.3s ease;
+        }
+
+        .log-item.success { border-left-color: var(--success); }
+        .log-item.fail { border-left-color: var(--danger); }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateX(-10px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .log-icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.85rem;
+        }
+
+        .log-item.success .log-icon { background: rgba(16, 185, 129, 0.2); }
+        .log-item.fail .log-icon { background: rgba(239, 68, 68, 0.2); }
+
+        .log-content { flex: 1; }
+
+        .log-title {
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .log-meta {
+            font-size: 0.6rem;
+            color: var(--text-muted);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .log-reward {
+            font-size: 0.75rem;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .log-reward.positive { color: var(--success); }
+        .log-reward.negative { color: var(--danger); }
+
+        .params {
+            display: grid;
+            gap: 0.4rem;
+        }
+
+        .param {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.75rem;
+        }
+
+        .param-label { color: var(--text-secondary); }
+        .param-value { 
+            font-family: 'JetBrains Mono', monospace; 
+            color: var(--primary);
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 1.5rem;
+            right: 1.5rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 0.85rem 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .toast-title { font-weight: 600; font-size: 0.85rem; }
+        .toast-msg { font-size: 0.7rem; color: var(--text-muted); }
+
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: var(--bg-dark); }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">
+                <div class="logo-icon">🎯</div>
+                <div>
+                    <div class="logo-text">AgentRank-RL</div>
+                    <div class="logo-sub">Linkup Research Demo</div>
+                </div>
+            </div>
+            <div class="badges">
+                <span class="badge live">● Training</span>
+                <span class="badge">DPO Algorithm</span>
+                <span class="badge">Agent Feedback</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="main">
+        <div class="hero">
+            <h1>🤖 Reinforcement Learning from AI Agent Feedback</h1>
+            <p>Train ranking models using task completion signals from AI agents — the first RL system for agentic search</p>
+        </div>
+
+        <div class="grid">
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">🔄 RL Training Environment</span>
+                    <span style="font-size: 0.7rem; color: var(--text-muted); font-family: 'JetBrains Mono';">Episode <span id="episodeNum">0</span></span>
+                </div>
+                <div class="card-body">
+                    <div class="metrics">
+                        <div class="metric">
+                            <div class="metric-value" id="totalReward">0.00</div>
+                            <div class="metric-label">Cumulative Reward</div>
+                            <div class="metric-change up" id="rewardChange">+0.00</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-value" id="successRate">0%</div>
+                            <div class="metric-label">Success Rate</div>
+                            <div class="metric-change up">+0%</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-value" id="ndcg">0.000</div>
+                            <div class="metric-label">nDCG@10</div>
+                            <div class="metric-change up">+0.000</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-value" id="policyLoss">0.500</div>
+                            <div class="metric-label">Policy Loss</div>
+                            <div class="metric-change down">-0.000</div>
+                        </div>
+                    </div>
+
+                    <div class="environment">
+                        <div class="panel">
+                            <div class="panel-header">
+                                <div class="panel-icon">🤖</div>
+                                <div>
+                                    <div class="panel-title">Research Agent</div>
+                                    <div class="panel-sub">claude-3-opus • Task: Information Retrieval</div>
+                                </div>
+                            </div>
+                            <div class="query-box">
+                                <div class="query-label">Current Query</div>
+                                <div class="query-text" id="currentQuery">Click "Start Training" to begin...</div>
+                            </div>
+                            <div class="results-list" id="resultsList"></div>
+                        </div>
+
+                        <div class="panel">
+                            <div class="panel-header">
+                                <div class="panel-icon">📊</div>
+                                <div>
+                                    <div class="panel-title">Q-Values</div>
+                                    <div class="panel-sub">Document ranking scores</div>
+                                </div>
+                            </div>
+                            <div class="q-values" id="qValues"></div>
+                            
+                            <div style="margin-top: 1rem;">
+                                <div class="panel-header" style="margin-bottom: 0.5rem;">
+                                    <div class="panel-icon" style="width: 32px; height: 32px; font-size: 1rem;">🧠</div>
+                                    <div>
+                                        <div class="panel-title" style="font-size: 0.85rem;">Policy Network</div>
+                                    </div>
+                                </div>
+                                <div class="network" id="network"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="controls">
+                        <button class="btn primary" id="trainBtn" onclick="toggleTraining()">
+                            <span id="trainIcon">▶️</span>
+                            <span id="trainText">Start Training</span>
+                        </button>
+                        <button class="btn" onclick="stepEpisode()">⏭️ Step</button>
+                        <button class="btn" onclick="resetAll()">🔄 Reset</button>
+                        <button class="btn" onclick="exportModel()">📦 Export</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sidebar">
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-title">📈 Reward History</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <div class="chart-title">Episodic Rewards</div>
+                            <div class="chart" id="rewardChart"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-title">📋 Training Log</span>
+                        <span style="font-size: 0.65rem; color: var(--text-muted);" id="logCount">0 events</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="log-container" id="logContainer">
+                            <div style="color: var(--text-muted); font-size: 0.8rem; text-align: center; padding: 1.5rem;">
+                                Start training to see events
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-title">⚙️ Hyperparameters</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="params">
+                            <div class="param">
+                                <span class="param-label">Learning Rate</span>
+                                <span class="param-value">3e-4</span>
+                            </div>
+                            <div class="param">
+                                <span class="param-label">Discount (γ)</span>
+                                <span class="param-value">0.99</span>
+                            </div>
+                            <div class="param">
+                                <span class="param-label">DPO β</span>
+                                <span class="param-value">0.1</span>
+                            </div>
+                            <div class="param">
+                                <span class="param-label">Batch Size</span>
+                                <span class="param-value">64</span>
+                            </div>
+                            <div class="param">
+                                <span class="param-label">Exploration (ε)</span>
+                                <span class="param-value" id="epsilon">1.00</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div class="toast" id="toast">
+        <span>✅</span>
+        <div>
+            <div class="toast-title" id="toastTitle">Success!</div>
+            <div class="toast-msg" id="toastMsg">Action completed</div>
+        </div>
+    </div>
+
+    <script>
+        // State
+        let isTraining = false;
+        let trainingInterval = null;
+        let episode = 0;
+        let totalReward = 0;
+        let successCount = 0;
+        let totalTasks = 0;
+        let rewardHistory = [];
+        let logs = [];
+
+        // Data
+        const queries = [
+            "What are the latest FDA regulations for AI medical devices?",
+            "Compare NVIDIA H100 vs AMD MI300X for LLM inference",
+            "Best practices for implementing RAG with Vespa",
+            "OpenAI SimpleQA benchmark methodology explained",
+            "GDPR compliance requirements for AI search APIs",
+            "State of the art in neural information retrieval",
+            "How to optimize HNSW index parameters",
+            "Latest developments in multi-modal LLMs"
+        ];
+
+        const docs = [
+            { title: "FDA AI/ML Medical Device Guidelines", url: "fda.gov/ai-ml" },
+            { title: "NVIDIA H100 Technical Specifications", url: "nvidia.com/h100" },
+            { title: "Vespa RAG Implementation Guide", url: "docs.vespa.ai/rag" },
+            { title: "OpenAI SimpleQA Paper", url: "openai.com/simpleqa" },
+            { title: "EU GDPR Compliance for AI", url: "gdpr.eu/ai" },
+            { title: "Neural IR Survey 2024", url: "arxiv.org/neural-ir" },
+            { title: "HNSW Algorithm Deep Dive", url: "arxiv.org/hnsw" },
+            { title: "GPT-4V Technical Report", url: "openai.com/gpt4v" }
+        ];
+
+        // Initialize
+        function init() {
+            initNetwork();
+            initChart();
+            initQValues();
+        }
+
+        function initNetwork() {
+            const layers = [
+                { neurons: 5, label: 'Query' },
+                { neurons: 4, label: 'Hidden' },
+                { neurons: 3, label: 'Hidden' },
+                { neurons: 2, label: 'Action' }
+            ];
+            
+            const container = document.getElementById('network');
+            container.innerHTML = layers.map((layer, i) => {
+                let neurons = '';
+                for (let j = 0; j < layer.neurons; j++) {
+                    neurons += '<div class="neuron" id="n' + i + '_' + j + '"></div>';
+                }
+                return '<div class="layer">' + neurons + '<div class="layer-label">' + layer.label + '</div></div>';
+            }).join('');
+        }
+
+        function initChart() {
+            const chart = document.getElementById('rewardChart');
+            let bars = '';
+            for (let i = 0; i < 30; i++) {
+                bars += '<div class="chart-bar" id="bar' + i + '" style="height: 3px;"></div>';
+            }
+            chart.innerHTML = bars;
+        }
+
+        function initQValues() {
+            const container = document.getElementById('qValues');
+            let html = '';
+            for (let i = 0; i < 5; i++) {
+                const val = Math.random() * 60 + 20;
+                html += '<div class="q-bar">' +
+                    '<span class="q-label">Doc ' + (i + 1) + '</span>' +
+                    '<div class="q-track">' +
+                    '<div class="q-fill" id="qfill' + i + '" style="width: ' + val + '%;">' +
+                    '<span class="q-value">' + val.toFixed(1) + '</span>' +
+                    '</div></div></div>';
+            }
+            container.innerHTML = html;
+        }
+
+        function updateQValues() {
+            for (let i = 0; i < 5; i++) {
+                const val = Math.random() * 60 + 30;
+                const fill = document.getElementById('qfill' + i);
+                if (fill) {
+                    fill.style.width = val + '%';
+                    fill.innerHTML = '<span class="q-value">' + val.toFixed(1) + '</span>';
+                }
+            }
+        }
+
+        function updateNetwork() {
+            document.querySelectorAll('.neuron').forEach(function(n) {
+                n.classList.remove('active');
+                if (Math.random() > 0.5) {
+                    n.classList.add('active');
+                }
+            });
+        }
+
+        function updateChart(reward) {
+            rewardHistory.push(reward);
+            if (rewardHistory.length > 30) rewardHistory.shift();
+            
+            const max = Math.max.apply(null, rewardHistory.map(Math.abs)) || 1;
+            
+            for (let i = 0; i < 30; i++) {
+                const bar = document.getElementById('bar' + i);
+                if (bar && rewardHistory[i] !== undefined) {
+                    const h = Math.abs(rewardHistory[i]) / max * 90 + 5;
+                    bar.style.height = h + '%';
+                    bar.className = 'chart-bar' + (rewardHistory[i] < 0 ? ' negative' : '');
+                }
+            }
+        }
+
+        function populateResults() {
+            const container = document.getElementById('resultsList');
+            const shuffled = docs.slice().sort(function() { return Math.random() - 0.5; }).slice(0, 5);
+            
+            container.innerHTML = shuffled.map(function(doc, i) {
+                const score = (0.7 + Math.random() * 0.25).toFixed(2);
+                return '<div class="result-item" id="res' + i + '" onclick="selectResult(' + i + ')">' +
+                    '<div class="result-rank">' + (i + 1) + '</div>' +
+                    '<div class="result-content">' +
+                    '<div class="result-title">' + doc.title + '</div>' +
+                    '<div class="result-url">' + doc.url + '</div>' +
+                    '</div>' +
+                    '<div class="result-score">' + score + '</div>' +
+                    '</div>';
+            }).join('');
+        }
+
+        function selectResult(idx) {
+            const items = document.querySelectorAll('.result-item');
+            items.forEach(function(item) {
+                item.classList.remove('selected', 'rejected');
+                const badge = item.querySelector('.reward-badge');
+                if (badge) badge.remove();
+            });
+
+            const item = document.getElementById('res' + idx);
+            const success = Math.random() > 0.35;
+            const reward = success ? (0.4 + Math.random() * 0.5) : (-0.1 - Math.random() * 0.3);
+
+            item.classList.add(success ? 'selected' : 'rejected');
+            
+            const badge = document.createElement('div');
+            badge.className = 'reward-badge ' + (reward > 0 ? 'positive' : 'negative');
+            badge.textContent = (reward > 0 ? '+' : '') + reward.toFixed(2);
+            item.appendChild(badge);
+
+            setTimeout(function() {
+                if (badge.parentNode) badge.remove();
+            }, 2000);
+
+            processReward(reward, success);
+        }
+
+        function processReward(reward, success) {
+            totalReward += reward;
+            totalTasks++;
+            if (success) successCount++;
+
+            document.getElementById('totalReward').textContent = totalReward.toFixed(2);
+            document.getElementById('rewardChange').textContent = (reward > 0 ? '+' : '') + reward.toFixed(2);
+            document.getElementById('rewardChange').className = 'metric-change ' + (reward > 0 ? 'up' : 'down');
+
+            const rate = totalTasks > 0 ? (successCount / totalTasks * 100).toFixed(0) : 0;
+            document.getElementById('successRate').textContent = rate + '%';
+
+            const ndcg = Math.min(0.5 + totalReward * 0.015, 0.95);
+            document.getElementById('ndcg').textContent = ndcg.toFixed(3);
+
+            const loss = Math.max(0.5 - episode * 0.008, 0.05);
+            document.getElementById('policyLoss').textContent = loss.toFixed(3);
+
+            updateChart(reward);
+            updateQValues();
+            updateNetwork();
+            addLog(reward, success);
+        }
+
+        function addLog(reward, success) {
+            const container = document.getElementById('logContainer');
+            const query = document.getElementById('currentQuery').textContent;
+            const shortQuery = query.length > 35 ? query.slice(0, 35) + '...' : query;
+
+            const entry = document.createElement('div');
+            entry.className = 'log-item ' + (success ? 'success' : 'fail');
+            entry.innerHTML = '<div class="log-icon">' + (success ? '✓' : '✗') + '</div>' +
+                '<div class="log-content">' +
+                '<div class="log-title">' + (success ? 'Task Completed' : 'Task Failed') + '</div>' +
+                '<div class="log-meta">Ep ' + episode + ' • ' + shortQuery + '</div>' +
+                '</div>' +
+                '<div class="log-reward ' + (reward > 0 ? 'positive' : 'negative') + '">' +
+                (reward > 0 ? '+' : '') + reward.toFixed(2) + '</div>';
+
+            if (container.firstChild && container.firstChild.style) {
+                container.innerHTML = '';
+            }
+
+            container.insertBefore(entry, container.firstChild);
+            logs.unshift(entry);
+
+            if (logs.length > 15) {
+                var old = logs.pop();
+                if (old.parentNode) old.parentNode.removeChild(old);
+            }
+
+            document.getElementById('logCount').textContent = logs.length + ' events';
+        }
+
+        function toggleTraining() {
+            if (!isTraining) {
+                startTraining();
+            } else {
+                pauseTraining();
+            }
+        }
+
+        function startTraining() {
+            isTraining = true;
+            document.getElementById('trainIcon').textContent = '⏸️';
+            document.getElementById('trainText').textContent = 'Pause';
+            document.getElementById('trainBtn').classList.add('active');
+
+            trainingInterval = setInterval(stepEpisode, 1800);
+            showToast('Training Started', 'RL agent learning from feedback');
+        }
+
+        function pauseTraining() {
+            isTraining = false;
+            document.getElementById('trainIcon').textContent = '▶️';
+            document.getElementById('trainText').textContent = 'Resume';
+            document.getElementById('trainBtn').classList.remove('active');
+
+            if (trainingInterval) {
+                clearInterval(trainingInterval);
+                trainingInterval = null;
+            }
+            showToast('Training Paused', 'Model weights preserved');
+        }
+
+        function stepEpisode() {
+            episode++;
+            document.getElementById('episodeNum').textContent = episode;
+
+            const eps = Math.max(1 - episode * 0.02, 0.1);
+            document.getElementById('epsilon').textContent = eps.toFixed(2);
+
+            const query = queries[Math.floor(Math.random() * queries.length)];
+            document.getElementById('currentQuery').textContent = query;
+
+            populateResults();
+
+            setTimeout(function() {
+                var idx = Math.floor(Math.random() * 5);
+                selectResult(idx);
+            }, 600);
+        }
+
+        function resetAll() {
+            pauseTraining();
+            episode = 0;
+            totalReward = 0;
+            successCount = 0;
+            totalTasks = 0;
+            rewardHistory = [];
+            logs = [];
+
+            document.getElementById('episodeNum').textContent = '0';
+            document.getElementById('totalReward').textContent = '0.00';
+            document.getElementById('successRate').textContent = '0%';
+            document.getElementById('ndcg').textContent = '0.000';
+            document.getElementById('policyLoss').textContent = '0.500';
+            document.getElementById('epsilon').textContent = '1.00';
+            document.getElementById('currentQuery').textContent = 'Click "Start Training" to begin...';
+            document.getElementById('resultsList').innerHTML = '';
+            document.getElementById('logContainer').innerHTML = '<div style="color: var(--text-muted); font-size: 0.8rem; text-align: center; padding: 1.5rem;">Start training to see events</div>';
+            document.getElementById('logCount').textContent = '0 events';
+
+            initChart();
+            initQValues();
+            showToast('Reset Complete', 'All progress cleared');
+        }
+
+        function exportModel() {
+            showToast('📦 Exported', 'agentrank_ep' + episode + '.pt');
+        }
+
+        function showToast(title, msg) {
+            var toast = document.getElementById('toast');
+            document.getElementById('toastTitle').textContent = title;
+            document.getElementById('toastMsg').textContent = msg;
+            toast.classList.add('show');
+            setTimeout(function() {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        // Start
+        init();
+    </script>
+</body>
+</html>
